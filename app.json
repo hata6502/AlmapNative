@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AlmapNative",
+    "name": "almap",
     "slug": "AlmapNative",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -29,6 +29,12 @@
       "eas": {
         "projectId": "3ba7f687-48d1-4c2c-b861-faeecb9228bd"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3ba7f687-48d1-4c2c-b861-faeecb9228bd"
     }
   }
 }

@@ -3,12 +3,12 @@ import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
 import { useEffect, useRef, useState } from "react";
 import { BackHandler } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
+
+const origin = "https://almap.hata6502.com";
 
 export default App = () => {
   const [location, setLocation] = useState();
-  const ref = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -21,6 +21,19 @@ export default App = () => {
       setLocation(await Location.getCurrentPositionAsync());
     })();
   }, []);
+
+  return location !== undefined && <Almap location={location} />;
+};
+
+const Almap = ({ location }) => {
+  const ref = useRef(null);
+
+  const uri = `${origin}/?${new URLSearchParams({
+    ...(location && {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    }),
+  })}`;
 
   const handleMessage = async (event) => {
     const message = JSON.parse(event.nativeEvent.data);
@@ -98,24 +111,12 @@ export default App = () => {
     }
   };
 
-  if (location === undefined) {
-    return null;
-  }
-  const uri = `https://almap.hata6502.com/?${new URLSearchParams({
-    ...(location && {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    }),
-  })}`;
-
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <WebView
-        ref={ref}
-        source={{ uri }}
-        originWhitelist={["https://almap.hata6502.com"]}
-        onMessage={handleMessage}
-      />
-    </SafeAreaView>
+    <WebView
+      ref={ref}
+      source={{ uri }}
+      originWhitelist={[origin]}
+      onMessage={handleMessage}
+    />
   );
 };
