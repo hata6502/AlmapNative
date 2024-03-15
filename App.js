@@ -1,6 +1,7 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
 import { BackHandler } from "react-native";
 import { WebView } from "react-native-webview";
@@ -22,7 +23,12 @@ export default App = () => {
     })();
   }, []);
 
-  return location !== undefined && <Almap location={location} />;
+  return (
+    <>
+      <StatusBar />
+      {location !== undefined && <Almap location={location} />}
+    </>
+  );
 };
 
 const Almap = ({ location }) => {
@@ -61,48 +67,50 @@ const Almap = ({ location }) => {
           });
           console.log("cursor", pagedInfo.endCursor);
 
-          for (const asset of pagedInfo.assets) {
-            try {
-              ref.current.postMessage(
-                JSON.stringify({
-                  type: "progress",
-                  progress: (assetIndex + 1) / pagedInfo.totalCount,
-                })
-              );
-              assetIndex++;
+          await Promise.all(
+            pagedInfo.assets.map(async (asset) => {
+              try {
+                const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
+                if (!assetInfo.location) {
+                  return;
+                }
 
-              const assetInfo = await MediaLibrary.getAssetInfoAsync(asset);
-              if (!assetInfo.location) {
-                continue;
+                const imageResult = await ImageManipulator.manipulateAsync(
+                  assetInfo.localUri,
+                  [
+                    {
+                      resize:
+                        assetInfo.height < assetInfo.width
+                          ? { width: 512 }
+                          : { height: 512 },
+                    },
+                  ],
+                  { base64: true }
+                );
+
+                ref.current.postMessage(
+                  JSON.stringify({
+                    type: "importPhoto",
+                    id: assetInfo.id,
+                    dataURL: `data:image/jpeg;base64,${imageResult.base64}`,
+                    location: assetInfo.location,
+                    creationTime: assetInfo.creationTime,
+                  })
+                );
+                console.log("ID", assetInfo.id);
+              } catch (exception) {
+                console.error(exception);
               }
+            })
+          );
 
-              const imageResult = await ImageManipulator.manipulateAsync(
-                assetInfo.localUri,
-                [
-                  {
-                    resize:
-                      assetInfo.height < assetInfo.width
-                        ? { width: 512 }
-                        : { height: 512 },
-                  },
-                ],
-                { base64: true }
-              );
-
-              ref.current.postMessage(
-                JSON.stringify({
-                  type: "importPhoto",
-                  id: assetInfo.id,
-                  dataURL: `data:image/jpeg;base64,${imageResult.base64}`,
-                  location: assetInfo.location,
-                  creationTime: assetInfo.creationTime,
-                })
-              );
-              console.log("ID", assetInfo.id);
-            } catch (exception) {
-              console.error(exception);
-            }
-          }
+          assetIndex += pagedInfo.assets.length;
+          ref.current.postMessage(
+            JSON.stringify({
+              type: "progress",
+              progress: assetIndex / pagedInfo.totalCount,
+            })
+          );
         } while (pagedInfo.hasNextPage);
 
         ref.current.postMessage(JSON.stringify({ type: "progress" }));
