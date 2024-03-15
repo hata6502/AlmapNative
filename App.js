@@ -3,7 +3,8 @@ import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useRef, useState } from "react";
-import { BackHandler } from "react-native";
+import { Alert, BackHandler } from "react-native";
+import base64 from "react-native-base64";
 import { WebView } from "react-native-webview";
 
 const origin = "https://almap.hata6502.com";
@@ -25,7 +26,7 @@ export default App = () => {
 
   return (
     <>
-      <StatusBar />
+      <StatusBar style="light" />
       {location !== undefined && <Almap location={location} />}
     </>
   );
@@ -52,9 +53,17 @@ const Almap = ({ location }) => {
           return;
         }
 
-        ref.current.postMessage(
-          JSON.stringify({ type: "progress", progress: 0 })
-        );
+        if (!message.after) {
+          await new Promise((resolve) =>
+            Alert.alert(
+              "",
+              "デバイス内のアルバムを取り込みます。しばらくお待ちください。",
+              [{ onPress: resolve }]
+            )
+          );
+        }
+
+        postMessageToWebView(ref.current, { type: "progress", progress: 0 });
 
         let pagedInfo;
         let assetIndex = 0;
@@ -88,15 +97,13 @@ const Almap = ({ location }) => {
                   { base64: true }
                 );
 
-                ref.current.postMessage(
-                  JSON.stringify({
-                    type: "importPhoto",
-                    id: assetInfo.id,
-                    dataURL: `data:image/jpeg;base64,${imageResult.base64}`,
-                    location: assetInfo.location,
-                    creationTime: assetInfo.creationTime,
-                  })
-                );
+                postMessageToWebView(ref.current, {
+                  type: "importPhoto",
+                  id: assetInfo.id,
+                  dataURL: `data:image/jpeg;base64,${imageResult.base64}`,
+                  location: assetInfo.location,
+                  creationTime: assetInfo.creationTime,
+                });
                 console.log("ID", assetInfo.id);
               } catch (exception) {
                 console.error(exception);
@@ -105,15 +112,13 @@ const Almap = ({ location }) => {
           );
 
           assetIndex += pagedInfo.assets.length;
-          ref.current.postMessage(
-            JSON.stringify({
-              type: "progress",
-              progress: assetIndex / pagedInfo.totalCount,
-            })
-          );
+          postMessageToWebView(ref.current, {
+            type: "progress",
+            progress: assetIndex / pagedInfo.totalCount,
+          });
         } while (pagedInfo.hasNextPage);
 
-        ref.current.postMessage(JSON.stringify({ type: "progress" }));
+        postMessageToWebView(ref.current, { type: "progress" });
         break;
       }
     }
@@ -127,4 +132,14 @@ const Almap = ({ location }) => {
       onMessage={handleMessage}
     />
   );
+};
+
+const postMessageToWebView = (webView, message) => {
+  webView.injectJavaScript(`
+    dispatchEvent(
+      new CustomEvent("almapwebmessage", {
+        detail: JSON.parse(atob("${base64.encode(JSON.stringify(message))}")),
+      })
+    );
+  `);
 };
