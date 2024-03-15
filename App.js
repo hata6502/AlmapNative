@@ -26,7 +26,7 @@ export default App = () => {
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="light" translucent={false} />
       {location !== undefined && <Almap location={location} />}
     </>
   );
