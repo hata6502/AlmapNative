@@ -78,8 +78,8 @@ const Almap = () => {
                 {
                   resize:
                     assetInfo.height < assetInfo.width
-                      ? { width: 512 }
-                      : { height: 512 },
+                      ? { width: 1024 }
+                      : { height: 1024 },
                 },
               ],
               { base64: true }
