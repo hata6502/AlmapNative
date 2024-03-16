@@ -42,6 +42,16 @@ const Almap = ({ location }) => {
     }),
   })}`;
 
+  const postMessageToWebView = (message) => {
+    ref.current.injectJavaScript(`
+      dispatchEvent(
+        new CustomEvent("almapwebmessage", {
+          detail: JSON.parse(atob("${base64.encode(JSON.stringify(message))}")),
+        })
+      );
+    `);
+  };
+
   const handleMessage = async (event) => {
     const message = JSON.parse(event.nativeEvent.data);
 
@@ -63,7 +73,7 @@ const Almap = ({ location }) => {
           );
         }
 
-        postMessageToWebView(ref.current, { type: "progress", progress: 0 });
+        postMessageToWebView({ type: "progress", progress: 0 });
 
         let pagedInfo;
         let assetIndex = 0;
@@ -97,7 +107,7 @@ const Almap = ({ location }) => {
                   { base64: true }
                 );
 
-                postMessageToWebView(ref.current, {
+                postMessageToWebView({
                   type: "importPhoto",
                   id: assetInfo.id,
                   dataURL: `data:image/jpeg;base64,${imageResult.base64}`,
@@ -112,13 +122,13 @@ const Almap = ({ location }) => {
           );
 
           assetIndex += pagedInfo.assets.length;
-          postMessageToWebView(ref.current, {
+          postMessageToWebView({
             type: "progress",
             progress: assetIndex / pagedInfo.totalCount,
           });
         } while (pagedInfo.hasNextPage);
 
-        postMessageToWebView(ref.current, { type: "progress" });
+        postMessageToWebView({ type: "progress" });
         break;
       }
     }
@@ -132,14 +142,4 @@ const Almap = ({ location }) => {
       onMessage={handleMessage}
     />
   );
-};
-
-const postMessageToWebView = (webView, message) => {
-  webView.injectJavaScript(`
-    dispatchEvent(
-      new CustomEvent("almapwebmessage", {
-        detail: JSON.parse(atob("${base64.encode(JSON.stringify(message))}")),
-      })
-    );
-  `);
 };
