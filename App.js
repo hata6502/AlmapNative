@@ -1,49 +1,25 @@
 import * as ImageManipulator from "expo-image-manipulator";
-import * as Location from "expo-location";
 import * as MediaLibrary from "expo-media-library";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { Alert, BackHandler } from "react-native";
 import base64 from "react-native-base64";
 import { WebView } from "react-native-webview";
 
 const origin = "https://almap.hata6502.com";
 
-export default App = () => {
-  const [location, setLocation] = useState();
+export default App = () => (
+  <>
+    <StatusBar backgroundColor="#000" style="light" translucent={false} />
+    <Almap />
+  </>
+);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setLocation(null);
-        return;
-      }
-
-      setLocation(await Location.getCurrentPositionAsync());
-    })();
-  }, []);
-
-  return (
-    <>
-      <StatusBar backgroundColor="#000" style="light" translucent={false} />
-      {location !== undefined && <Almap location={location} />}
-    </>
-  );
-};
-
-const Almap = ({ location }) => {
-  const ref = useRef(null);
-
-  const uri = `${origin}/?${new URLSearchParams({
-    ...(location && {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    }),
-  })}`;
+const Almap = () => {
+  const webView = useRef(null);
 
   const postMessageToWebView = (message) => {
-    ref.current.injectJavaScript(`
+    webView.current.injectJavaScript(`
       dispatchEvent(
         new CustomEvent("almapwebmessage", {
           detail: JSON.parse(atob("${base64.encode(JSON.stringify(message))}")),
@@ -59,6 +35,13 @@ const Almap = ({ location }) => {
       case "start": {
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status !== "granted") {
+          await new Promise((resolve) =>
+            Alert.alert(
+              "",
+              "アルバムへのアクセスが許可されていません。設定から許可してください。",
+              [{ onPress: resolve }]
+            )
+          );
           BackHandler.exitApp();
           return;
         }
@@ -136,8 +119,8 @@ const Almap = ({ location }) => {
 
   return (
     <WebView
-      ref={ref}
-      source={{ uri }}
+      ref={webView}
+      source={{ uri: `${origin}/` }}
       originWhitelist={[origin]}
       onMessage={handleMessage}
     />
