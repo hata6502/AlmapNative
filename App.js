@@ -44,7 +44,7 @@ const Almap = () => {
       await new Promise((resolve) =>
         Alert.alert(
           "",
-          "デバイス内のアルバムを取り込みます。しばらくお待ちください。",
+          "アルバムを取り込みます。初回のみ時間がかかるため、アプリを開いたままお待ちください。",
           [{ onPress: resolve }]
         )
       );
