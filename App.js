@@ -1,6 +1,7 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as MediaLibrary from "expo-media-library";
 import { StatusBar } from "expo-status-bar";
+import PQueue from "p-queue/dist";
 import { useEffect, useRef } from "react";
 import { Alert, AppState, BackHandler } from "react-native";
 import base64 from "react-native-base64";
@@ -78,8 +79,8 @@ const Almap = () => {
                 {
                   resize:
                     assetInfo.height < assetInfo.width
-                      ? { width: 1024 }
-                      : { height: 1024 },
+                      ? { height: 192 }
+                      : { width: 192 },
                 },
               ],
               { base64: true }
@@ -93,7 +94,7 @@ const Almap = () => {
               creationTime: assetInfo.creationTime,
             });
             latestCreationTime = assetInfo.creationTime;
-            console.log("ID", assetInfo.id);
+            console.log("importPhoto", assetInfo.id);
           } catch (exception) {
             console.error(exception);
           }
@@ -121,10 +122,35 @@ const Almap = () => {
     `);
   };
 
+  const loadPhotoQueue = new PQueue({ concurrency: 1 });
   const handleMessage = async (event) => {
     const message = JSON.parse(event.nativeEvent.data);
 
     switch (message.type) {
+      case "loadPhoto": {
+        const imageResult = await loadPhotoQueue.add(async () => {
+          const assetInfo = await MediaLibrary.getAssetInfoAsync(message.id);
+          return ImageManipulator.manipulateAsync(
+            assetInfo.localUri,
+            [{ resize: { width: 1080 } }],
+            { base64: true }
+          );
+        });
+
+        postMessageToWebView({
+          type: "loadPhoto",
+          id: message.id,
+          dataURL: `data:image/jpeg;base64,${imageResult.base64}`,
+        });
+        console.log("loadPhoto", message.id);
+        break;
+      }
+
+      case "memoryClosed": {
+        loadPhotoQueue.clear();
+        break;
+      }
+
       case "start": {
         after.current = message.after;
         await importPhotos();

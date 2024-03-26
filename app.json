@@ -21,7 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.hata6502.AlmapNative"
+      "package": "com.hata6502.AlmapNative",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
