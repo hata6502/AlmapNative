@@ -41,16 +41,6 @@ const Almap = () => {
       return;
     }
 
-    if (!createdAfter) {
-      await new Promise((resolve) =>
-        Alert.alert(
-          "",
-          "アルバムを取り込みます。初回のみ時間がかかるため、アプリを開いたままお待ちください。",
-          [{ onPress: resolve }]
-        )
-      );
-    }
-
     postMessageToWebView({ type: "progress", progress: 0 });
 
     let assetIndex = 0;
