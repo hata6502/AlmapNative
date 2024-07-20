@@ -23,7 +23,7 @@
       },
       "package": "com.hata6502.AlmapNative",
       "softwareKeyboardLayoutMode": "pan",
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"
