@@ -6,6 +6,9 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      ["expo-media-library", { "isAccessMediaLocationEnabled": true }]
+    ],
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
