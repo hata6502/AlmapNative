@@ -22,6 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.hata6502.AlmapNative",
+      "softwareKeyboardLayoutMode": "pan",
       "versionCode": 2
     },
     "web": {
